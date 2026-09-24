@@ -1,11 +1,34 @@
 <!DOCTYPE html>
 <html lang="es" class="light">
 <head>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Finanzas Pro</title>
+    
+    <!-- PWA & Standalone Mobile Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3498db">
+    
+    <!-- Inline Manifest for Direct PWA Installation -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "Control de Finanzas Pro",
+        "short_name": "Finanzas Pro",
+        "start_url": "./index.html",
+        "display": "standalone",
+        "background_color": "#121212",
+        "theme_color": "#3498db",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    }'>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -186,7 +209,6 @@
 
     <!-- Application Logic -->
     <script>
-        // LocalStorage DB Initialization
         const DB_KEY = "finanzas_pro_db_v1";
 
         function getDB() {
@@ -210,7 +232,6 @@
 
         let currentWalletId = 1;
 
-        // Initialize App on Load
         window.addEventListener('DOMContentLoaded', () => {
             const db = getDB();
             if (db.billeteras.length > 0) {
@@ -220,7 +241,6 @@
             cargarVistaBilleteraActual();
             lucide.createIcons();
 
-            // Mobile menu listeners
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
             const menuBtn = document.getElementById('mobile-menu-btn');
@@ -241,7 +261,6 @@
             backdrop.addEventListener('click', () => toggleSidebar(false));
         });
 
-        // Toggle Dark / Light Theme
         function toggleDarkMode() {
             const html = document.documentElement;
             const isDark = html.classList.contains('dark');
@@ -255,7 +274,6 @@
             lucide.createIcons();
         }
 
-        // Update Wallets List UI
         function actualizarListaBilleteras() {
             const db = getDB();
             const container = document.getElementById('wallet-list-container');
@@ -273,7 +291,6 @@
                     currentWalletId = w.id;
                     actualizarListaBilleteras();
                     cargarVistaBilleteraActual();
-                    // Close sidebar on mobile when selecting
                     if (window.innerWidth < 768) {
                         document.getElementById('sidebar').classList.add('-translate-x-full');
                         document.getElementById('sidebar-backdrop').classList.add('hidden');
@@ -360,14 +377,13 @@
             lucide.createIcons();
         }
 
-        // New Wallet Dialog Custom Prompt
         function dialogoNuevaBilletera() {
             const nombre = prompt("Ingresa el nombre de la nueva cuenta:");
             if (nombre && nombre.trim() !== "") {
                 const db = getDB();
                 const exists = db.billeteras.some(w => w.nombre.toLowerCase() === nombre.trim().toLowerCase());
                 if (exists) {
-                    alertCustom("Ya existe una billetera con ese nombre.");
+                    alert("Ya existe una billetera con ese nombre.");
                     return;
                 }
                 const newId = db.billeteras.length > 0 ? Math.max(...db.billeteras.map(w => w.id)) + 1 : 1;
@@ -379,12 +395,11 @@
             }
         }
 
-        // Delete Wallet
         function eliminarBilleteraActual() {
             if (currentWalletId === null) return;
             const db = getDB();
             if (db.billeteras.length <= 1) {
-                alertCustom("Debes mantener al menos una billetera.");
+                alert("Debes mantener al menos una billetera.");
                 return;
             }
             if (confirm("¿Estás seguro de eliminar esta billetera y todos sus movimientos?")) {
@@ -397,10 +412,9 @@
             }
         }
 
-        // Register Transaction
         function registrarTransaccion(tipo) {
             if (currentWalletId === null) {
-                alertCustom("Selecciona una billetera primero.");
+                alert("Selecciona una billetera primero.");
                 return;
             }
             const inputMonto = document.getElementById('entry-monto');
@@ -408,7 +422,7 @@
 
             const montoVal = parseFloat(inputMonto.value.replace(',', '.'));
             if (isNaN(montoVal) || montoVal <= 0) {
-                alertCustom("Por favor ingresa un monto válido.");
+                alert("Por favor ingresa un monto válido.");
                 return;
             }
 
@@ -418,14 +432,12 @@
             const wallet = db.billeteras.find(w => w.id === currentWalletId);
             if (!wallet) return;
 
-            // Update balance
             if (tipo === 'Ingreso') {
                 wallet.saldo += montoVal;
             } else {
                 wallet.saldo -= montoVal;
             }
 
-            // Push movement
             db.movimientos.push({
                 billetera_id: currentWalletId,
                 tipo: tipo,
@@ -436,7 +448,6 @@
 
             saveDB(db);
 
-            // Reset inputs
             inputMonto.value = '';
             inputDesc.value = '';
 
@@ -444,18 +455,13 @@
             cargarVistaBilleteraActual();
         }
 
-        // Modal Resumen Consolidado
-        let resumenCheckStates = {};
-
         function abrirResumen() {
             const db = getDB();
             const container = document.getElementById('resumen-checks-container');
             container.innerHTML = '';
-            resumenCheckStates = {};
 
             db.billeteras.forEach(w => {
-                resumenCheckStates[w.id] = true;
-                const wrapper = document.label = document.createElement('label');
+                const wrapper = document.createElement('label');
                 wrapper.className = "flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-[#121212] border border-gray-200/60 dark:border-gray-800 cursor-pointer hover:border-blue-500 transition";
                 wrapper.innerHTML = `
                     <div class="flex items-center space-x-3">
@@ -480,7 +486,7 @@
             const checkboxes = document.querySelectorAll('#resumen-checks-container input[type="checkbox"]');
             let total = 0;
 
-            checkboxes.value = checkboxes.forEach(cb => {
+            checkboxes.forEach(cb => {
                 const id = parseInt(cb.getAttribute('data-wallet-id'));
                 if (cb.checked) {
                     const w = db.billeteras.find(item => item.id === id);
@@ -491,7 +497,6 @@
             document.getElementById('resumen-total').innerText = `$ ${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
 
-        // Safe helper utilities
         function escapeHtml(str) {
             return str.replace(/[&<>'"]/g, 
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
@@ -501,10 +506,6 @@
         function formatFecha(isoStr) {
             const d = new Date(isoStr);
             return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function alertCustom(msg) {
-            alert(msg);
         }
     </script>
 </body>
